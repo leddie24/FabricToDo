@@ -7,15 +7,20 @@
    <link rel="stylesheet" href="/css/fabric.min.css" />
    <link rel="stylesheet" href="/css/fabric.components.min.css" />
    <script src="/scripts/fabric.js"></script>
-   <script src="/scripts/mustache.js"></script>
 </head>
 <body>
    <div id="container" class="ms-u-normalize ms-font-m">
       <h2>To Do List</h2>
-      <div class="ms-TextField ms-TextField--placeholder">
-         <label class="ms-Label">New Task</label>
-         <input class="ms-TextField-field" type="text" value="" placeholder="">
+      <div id="taskForm" class="taskForm">
+         <div class="ms-TextField ms-TextField--placeholder">
+            <label class="ms-Label">New Task</label>
+            <input class="ms-TextField-field" type="text" value="" placeholder="">
+         </div>
+         <button class="ms-Button ms-Button--primary">
+            <span class="ms-Button-label">Add Task</span>
+         </button>
       </div>
+
       <ul id="allLists"></ul>
       <button id="newListButton" class="ms-Button">
          <span class="ms-Button-label">New List</span>
@@ -56,6 +61,8 @@
          this.NEW_LIST_DIALOG_ELEM = document.getElementById("newListDialog");
          this.NEW_LIST_BUTTON_ELEM = document.getElementById("newListButton");
          this.TODO_LIST_CONTAINER = document.getElementById("allLists");
+         this.TASK_FORM = document.getElementById("taskForm");
+
       },
       // Start fabric Components
       startComponents: function() {
@@ -64,12 +71,6 @@
 
          // Define New List Dialog
          this.NEWLISTDIALOG = new fabric["Dialog"](this.NEW_LIST_DIALOG_ELEM);
-
-         // Initialize TextFields
-         let TextFieldElements = document.querySelectorAll(".ms-TextField");
-         for (let i = 0; i < TextFieldElements.length; i++) {
-            new fabric['TextField'](TextFieldElements[i]);
-         }
       },
       // Get Data from LocalStorage
       getData: function() {
@@ -133,14 +134,36 @@
    }
    components.push(NewListDialog);
 
+   let TaskForm = {
+      init: function() {
+         this.cacheDom();
+         this.startComponents();
+      },
+      cacheDom: function() {
+         this.SUBMIT_BUTTON = ToDoList.TASK_FORM.querySelector(".ms-Button");
+         this.TASK_FORM_NAME = ToDoList.TASK_FORM.querySelector(".ms-TextField-field");
+      },
+      startComponents: function() {
+         // Initialize TextFields
+         let TextFieldElements = ToDoList.TASK_FORM.querySelectorAll(".ms-TextField");
+         for (let i = 0; i < TextFieldElements.length; i++) {
+            new fabric['TextField'](TextFieldElements[i]);
+         }
+
+         // Button Handler
+         // TODO FIX HANDLER
+         new fabric['Button'](this.SUBMIT_BUTTON, function() {
+            alert('test');
+         });
+      }
+   }
+   components.push(TaskForm);
+
    function startApp() {
       components.forEach(function(ele) {
          ele.init();
       });
    }
    startApp();
-
-
-
 </script>
 </html>
