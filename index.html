@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <meta charset="UTF-8">
+   <title>To Do List</title>
+   <link rel="stylesheet" href="/css/styles.css" />
+   <link rel="stylesheet" href="/css/fabric.min.css" />
+   <link rel="stylesheet" href="/css/fabric.components.min.css" />
+   <script src="/scripts/fabric.js"></script>
+   <script src="/scripts/mustache.js"></script>
+</head>
+<body>
+   <div id="container" class="ms-u-normalize ms-font-m">
+      <h2>To Do List</h2>
+      <div class="ms-TextField ms-TextField--placeholder">
+         <label class="ms-Label">New Task</label>
+         <input class="ms-TextField-field" type="text" value="" placeholder="">
+      </div>
+      <ul id="allLists"></ul>
+      <button id="newListButton" class="ms-Button">
+         <span class="ms-Button-label">New List</span>
+      </button>
+   </div>
+
+
+   <div id="newListDialog" class="ms-Dialog">
+      <div class="ms-Dialog-title">New Todo List</div>
+      <div class="ms-Dialog-content">
+         <div class="ms-TextField">
+           <label class="ms-Label">Name</label>
+           <input class="ms-TextField-field" type="text" value="" placeholder="" >
+         </div>
+      </div>
+      <div class="ms-Dialog-actions">
+         <button class="ms-Button ms-Dialog-action ms-Button--primary">
+            <span class="ms-Button-label">Save</span>
+         </button>
+         <button class="ms-Button ms-Dialog-action">
+            <span class="ms-Button-label">Cancel</span>
+         </button>
+      </div>
+   </div>
+</body>
+
+<script>
+   let components = [];
+   let ToDoList = {
+      data: [],
+      currentList: null,
+      init: function() {
+         this.cacheDom();
+         this.startComponents();
+         this.getData();
+      },
+      cacheDom() {
+         this.NEW_LIST_DIALOG_ELEM = document.getElementById("newListDialog");
+         this.NEW_LIST_BUTTON_ELEM = document.getElementById("newListButton");
+         this.TODO_LIST_CONTAINER = document.getElementById("allLists");
+      },
+      // Start fabric Components
+      startComponents: function() {
+         // Define New List Button
+         new fabric['Button'](this.NEW_LIST_BUTTON_ELEM, this.openNewListDialog.bind(this));
+
+         // Define New List Dialog
+         this.NEWLISTDIALOG = new fabric["Dialog"](this.NEW_LIST_DIALOG_ELEM);
+
+         // Initialize TextFields
+         let TextFieldElements = document.querySelectorAll(".ms-TextField");
+         for (let i = 0; i < TextFieldElements.length; i++) {
+            new fabric['TextField'](TextFieldElements[i]);
+         }
+      },
+      // Get Data from LocalStorage
+      getData: function() {
+         let listData = localStorage.getItem('TODODATA');
+         if (!listData) {
+            localStorage.setItem("TODODATA", "[]");
+            listData = localStorage.getItem("TODODATA");
+         }
+         listData = JSON.parse(listData);
+         this.data = listData;
+         this.showList();
+      },
+      // Create Todo List Items
+      showList: function() {
+         while (this.TODO_LIST_CONTAINER.hasChildNodes()) {
+            this.TODO_LIST_CONTAINER.removeChild(this.TODO_LIST_CONTAINER.lastChild);
+         }
+         this.data.forEach(function(ele, idx) {
+            let listItem = document.createElement("li");
+            listItem.setAttribute("data-list-id", idx);
+            listItem.classList.add("todoList");
+            listItem.textContent = ele.name;
+            listItem.addEventListener("click", this.setCurrentList.bind(this, idx));
+            this.TODO_LIST_CONTAINER.appendChild(listItem);
+         }.bind(this));
+      },
+      // Add New To Do List
+      addNewList: function() {
+         let newList = {
+            name: NewListDialog.NAME.value,
+            tasks: []
+         };
+         ToDoList.data.push(newList);
+         let newData = JSON.stringify(ToDoList.data);
+         localStorage.setItem("TODODATA", newData);
+         this.getData();
+      },
+      setCurrentList: function(idx) {
+         this.currentList = idx;
+      },
+      // Open new todo list dialog
+      openNewListDialog: function() {
+         this.NEWLISTDIALOG.open();
+      }
+   }
+   components.push(ToDoList);
+
+   let NewListDialog = {
+      init: function() {
+         this.cacheDom();
+         this.startComponents();
+      },
+      cacheDom: function() {
+         this.SUBMIT_BUTTON = ToDoList.NEW_LIST_DIALOG_ELEM.querySelector(".ms-Button--primary");
+         this.NAME = ToDoList.NEW_LIST_DIALOG_ELEM.querySelector(".ms-TextField-field");
+      },
+      startComponents: function() {
+         // Define Submit Button
+         new fabric["Button"](this.SUBMIT_BUTTON, ToDoList.addNewList.bind(ToDoList));
+      }
+   }
+   components.push(NewListDialog);
+
+   function startApp() {
+      components.forEach(function(ele) {
+         ele.init();
+      });
+   }
+   startApp();
+
+
+
+</script>
+</html>

@@ -1,0 +1,29 @@
+{
+  "name": "fabric_todo",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/leddie24/FabricToDo.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/leddie24/FabricToDo/issues"
+  },
+  "homepage": "https://github.com/leddie24/FabricToDo#readme",
+  "devDependencies": {
+    "del": "^2.2.2",
+    "express": "^4.14.0",
+    "gulp": "^3.9.1",
+    "gulp-debug": "^2.1.2",
+    "gulp-express": "^0.3.5",
+    "gulp-sass": "^2.3.2",
+    "mustache": "^2.2.1",
+    "office-ui-fabric-js": "^1.2.0"
+  }
+}
