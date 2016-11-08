@@ -10,29 +10,109 @@
 </head>
 <body>
    <div id="container" class="ms-u-normalize ms-font-m">
-      <h2>To Do List</h2>
-      <div id="taskForm" class="taskForm">
-         <div class="ms-TextField ms-TextField--placeholder">
-            <label class="ms-Label">New Task</label>
-            <input class="ms-TextField-field" type="text" value="" placeholder="">
-         </div>
-         <button class="ms-Button ms-Button--primary">
-            <span class="ms-Button-label">Add Task</span>
-         </button>
+      <h1 id="header" class="ms-font-xxl">To Do Lists</h1>
+      <div class="ms-CommandBar">
+          <div class="ms-CommandBar-mainArea">
+              <div class="ms-CommandButton">
+                  <button id="newListButton" class="ms-CommandButton-button">
+                     <span class="ms-CommandButton-icon ms-fontColor-themePrimary">
+                        <i class="ms-Icon ms-Icon--CheckList"></i>
+                     </span>
+                     <span class="ms-CommandButton-label">Create List</span>  
+                  </button>
+               </div>
+               <div class="ms-CommandButton">
+                  <button id="viewListsButton" class="ms-CommandButton-button">
+                     <span class="ms-CommandButton-icon ms-fontColor-themePrimary">
+                        <i class="ms-Icon ms-Icon--DietPlanNotebook"></i>
+                     </span>
+                     <span class="ms-CommandButton-label">View List</span>
+                     <span class="ms-CommandButton-dropdownIcon"><i class="ms-Icon ms-Icon--ChevronDown"></i></span>
+                  </button>
+                  <ul id="listsMenu" class="ms-ContextualMenu is-hidden">
+                     <li id="listItemTemplate" class="templateHtml ms-ContextualMenu-item">
+                        <a class="ms-ContextualMenu-link"></a>
+                     </li>
+                  </ul>
+               </div>
+               <div id="deleteList" class="ms-CommandButton is-disabled">
+                  <button class="ms-CommandButton-button">
+                     <span class="ms-CommandButton-icon ms-fontColor-themePrimary">
+                        <i class="ms-Icon ms-Icon--Delete"></i>
+                     </span>
+                     <span class="ms-CommandButton-label">Delete Current List</span>  
+                  </button>
+              </div>
+          </div>
       </div>
+      <div id="taskForm" class="taskForm">
+         <!-- Current Task Name -->
+         <h2 id="currentList" class="ms-font-xl"></h2>
 
-      <ul id="allLists"></ul>
-      <button id="newListButton" class="ms-Button">
-         <span class="ms-Button-label">New List</span>
-      </button>
+
+         <div id="taskList">
+            <div class="ms-Pivot ms-Pivot--large ms-Pivot--tabs">
+               <ul class="ms-Pivot-links">
+                  <li class="ms-Pivot-link ms-u-borderBox is-selected" data-content="all" title="All">
+                    All
+                  </li>
+                  <li class="ms-Pivot-link ms-u-borderBox" data-content="todo" title="To Do">
+                    To Do
+                  </li>
+                  <li class="ms-Pivot-link ms-u-borderBox" data-content="done" title="Done">
+                    Done
+                  </li>
+               </ul>
+               <div class="formContainer">
+                  <div class="ms-TextField ms-TextField--placeholder">
+                     <label class="ms-Label">New Task</label>
+                     <input class="ms-TextField-field" type="text" value="" placeholder="">
+                  </div>
+                  <button class="ms-Button ms-Button--primary">
+                     <span class="ms-Button-label">Add Task</span>
+                  </button>
+               </div>
+               <div class="all ms-Pivot-content ms-u-fadeIn100" data-content="all">
+               All
+               </div>
+               <div class="todo ms-Pivot-content ms-u-fadeIn100" data-content="todo">
+               Todo
+               </div>
+               <div class="done ms-Pivot-content ms-u-fadeIn100" data-content="done">
+               Done
+               </div>
+            </div>
+            <!-- Template HTML for Task Item -->
+            <div id="taskTemplate" class="ms-CheckBox templateHtml"> 
+                <input tabindex="-1" type="checkbox" class="ms-CheckBox-input">
+                <label role="checkbox"
+                    class="ms-CheckBox-field"
+                    aria-checked="false"
+                    name="checkboxa">
+                    <span class="ms-Label"></span>
+                </label>
+            </div>
+            <!-- END Template Html for Task Item -->
+         </div>
+      </div>
    </div>
 
-
+   <!-- Dialog for Adding New To Do List -->
    <div id="newListDialog" class="ms-Dialog">
-      <div class="ms-Dialog-title">New Todo List</div>
+      <div class="ms-Dialog-title">New To Do List</div>
+      <div class="ms-MessageBar ms-MessageBar--blocked hidden ms-u-borderBox">
+          <div class="ms-MessageBar-content">
+              <div class="ms-MessageBar-icon">
+                  <i class="ms-Icon ms-Icon--Blocked"></i>
+              </div>
+              <div class="ms-MessageBar-text">
+                  List name must be longer than 3 characters
+              </div>
+          </div>
+      </div>
       <div class="ms-Dialog-content">
          <div class="ms-TextField">
-           <label class="ms-Label">Name</label>
+           <label class="ms-Label">List Name</label>
            <input class="ms-TextField-field" type="text" value="" placeholder="" >
          </div>
       </div>
@@ -45,125 +125,251 @@
          </button>
       </div>
    </div>
+   <!-- END Dialog for Adding New To Do List -->
 </body>
 
 <script>
-   let components = [];
-   let ToDoList = {
-      data: [],
-      currentList: null,
-      init: function() {
-         this.cacheDom();
-         this.startComponents();
-         this.getData();
-      },
-      cacheDom() {
-         this.NEW_LIST_DIALOG_ELEM = document.getElementById("newListDialog");
-         this.NEW_LIST_BUTTON_ELEM = document.getElementById("newListButton");
-         this.TODO_LIST_CONTAINER = document.getElementById("allLists");
-         this.TASK_FORM = document.getElementById("taskForm");
-
-      },
-      // Start fabric Components
-      startComponents: function() {
-         // Define New List Button
-         new fabric['Button'](this.NEW_LIST_BUTTON_ELEM, this.openNewListDialog.bind(this));
-
-         // Define New List Dialog
-         this.NEWLISTDIALOG = new fabric["Dialog"](this.NEW_LIST_DIALOG_ELEM);
-      },
-      // Get Data from LocalStorage
-      getData: function() {
-         let listData = localStorage.getItem('TODODATA');
-         if (!listData) {
-            localStorage.setItem("TODODATA", "[]");
-            listData = localStorage.getItem("TODODATA");
+   (function() {
+      let components = [];
+      let ToDoList = {
+         data: [],
+         currentList: null,
+         init: function() {
+            this.cacheDom();
+            this.startComponents();
+            this.getData();
+         },
+         cacheDom() {
+            this.NEW_LIST_DIALOG_ELEM = document.getElementById("newListDialog");
+            this.NEW_LIST_BUTTON_ELEM = document.getElementById("newListButton");
+            this.SHOW_LISTS_BUTTON_ELEM = document.getElementById("viewListsButton");
+            this.SHOW_LIST_CONTEXT_MENU = document.getElementById("listsMenu")
+            this.TODO_LIST_CONTAINER = document.getElementById("listsMenu");
+            this.TASK_FORM = document.getElementById("taskForm");
+            this.TASK_LIST = document.getElementById("taskList");
+            this.LIST_ITEM_TEMPLATE = document.getElementById("listItemTemplate");
+            this.DELETE_LIST = document.getElementById("deleteList");
+            this.DELETE_LIST_BUTTON = this.DELETE_LIST.querySelector(".ms-CommandButton-button");
+         },
+         startComponents: function() {
+            var contextualMenu = new fabric['ContextualMenu'](this.SHOW_LIST_CONTEXT_MENU, this.SHOW_LISTS_BUTTON_ELEM);
+            new fabric["Button"](this.NEW_LIST_BUTTON_ELEM, this.openNewListDialog.bind(this));
+            this.NEW_LIST_DIALOG = new fabric["Dialog"](this.NEW_LIST_DIALOG_ELEM);
+         },
+         getData: function() {
+            let listData = localStorage.getItem('TODODATA');
+            if (!listData) {
+               localStorage.setItem("TODODATA", "[]");
+               listData = localStorage.getItem("TODODATA");
+            }
+            listData = JSON.parse(listData);
+            this.data = listData;
+            this.showList();
+            TaskList.listTasks();
+         },
+         // Create Todo List Items
+         showList: function() {
+            // Clear list
+            while (this.TODO_LIST_CONTAINER.hasChildNodes()) {
+               this.TODO_LIST_CONTAINER.removeChild(this.TODO_LIST_CONTAINER.lastChild);
+            }
+            this.data.forEach(function(ele, idx) {
+               let listItem = this.LIST_ITEM_TEMPLATE.cloneNode(true);
+               let listName = listItem.querySelector(".ms-ContextualMenu-link");
+               listItem.classList.remove("templateHtml");
+               listItem.removeAttribute("id");
+               listName.textContent = ele.name;
+               listItem.addEventListener("click", this.setCurrentList.bind(this, idx));
+               this.TODO_LIST_CONTAINER.appendChild(listItem);
+            }.bind(this));
+         },
+         // Add New To Do List
+         addNewList: function() {
+            if (NewListDialog.NAME.value.length < 4) {
+               NewListDialog.ERROR_MESSAGE.classList.remove("hidden");
+               this.NEW_LIST_DIALOG.open();
+            } else {
+               NewListDialog.ERROR_MESSAGE.classList.add("hidden");
+               let newList = {
+                  name: NewListDialog.NAME.value,
+                  tasks: []
+               };
+               NewListDialog.NAME.value = "";
+               ToDoList.data.push(newList);
+               let newData = JSON.stringify(ToDoList.data);
+               localStorage.setItem("TODODATA", newData);
+               this.getData();
+            }
+         },
+         setCurrentList: function(idx) {
+            this.currentList = idx;
+            if (this.currentList !== null) {
+               this.TASK_FORM.classList.add("visible");
+               this.DELETE_LIST.classList.remove("is-disabled");
+            } else {
+               this.TASK_FORM.classList.remove("visible");
+               this.DELETE_LIST.classList.add("is-disabled");
+            }
+            TaskList.listTasks();
+            TaskForm.setName();
+         },
+         // Open new todo list dialog
+         openNewListDialog: function() {
+            this.NEW_LIST_DIALOG.open();
          }
-         listData = JSON.parse(listData);
-         this.data = listData;
-         this.showList();
-      },
-      // Create Todo List Items
-      showList: function() {
-         while (this.TODO_LIST_CONTAINER.hasChildNodes()) {
-            this.TODO_LIST_CONTAINER.removeChild(this.TODO_LIST_CONTAINER.lastChild);
-         }
-         this.data.forEach(function(ele, idx) {
-            let listItem = document.createElement("li");
-            listItem.setAttribute("data-list-id", idx);
-            listItem.classList.add("todoList");
-            listItem.textContent = ele.name;
-            listItem.addEventListener("click", this.setCurrentList.bind(this, idx));
-            this.TODO_LIST_CONTAINER.appendChild(listItem);
-         }.bind(this));
-      },
-      // Add New To Do List
-      addNewList: function() {
-         let newList = {
-            name: NewListDialog.NAME.value,
-            tasks: []
-         };
-         ToDoList.data.push(newList);
-         let newData = JSON.stringify(ToDoList.data);
-         localStorage.setItem("TODODATA", newData);
-         this.getData();
-      },
-      setCurrentList: function(idx) {
-         this.currentList = idx;
-      },
-      // Open new todo list dialog
-      openNewListDialog: function() {
-         this.NEWLISTDIALOG.open();
       }
-   }
-   components.push(ToDoList);
+      components.push(ToDoList);
 
-   let NewListDialog = {
-      init: function() {
-         this.cacheDom();
-         this.startComponents();
-      },
-      cacheDom: function() {
-         this.SUBMIT_BUTTON = ToDoList.NEW_LIST_DIALOG_ELEM.querySelector(".ms-Button--primary");
-         this.NAME = ToDoList.NEW_LIST_DIALOG_ELEM.querySelector(".ms-TextField-field");
-      },
-      startComponents: function() {
-         // Define Submit Button
-         new fabric["Button"](this.SUBMIT_BUTTON, ToDoList.addNewList.bind(ToDoList));
-      }
-   }
-   components.push(NewListDialog);
-
-   let TaskForm = {
-      init: function() {
-         this.cacheDom();
-         this.startComponents();
-      },
-      cacheDom: function() {
-         this.SUBMIT_BUTTON = ToDoList.TASK_FORM.querySelector(".ms-Button");
-         this.TASK_FORM_NAME = ToDoList.TASK_FORM.querySelector(".ms-TextField-field");
-      },
-      startComponents: function() {
-         // Initialize TextFields
-         let TextFieldElements = ToDoList.TASK_FORM.querySelectorAll(".ms-TextField");
-         for (let i = 0; i < TextFieldElements.length; i++) {
-            new fabric['TextField'](TextFieldElements[i]);
+      let NewListDialog = {
+         init: function() {
+            this.cacheDom();
+            this.startComponents();
+         },
+         cacheDom: function() {
+            this.SUBMIT_BUTTON = ToDoList.NEW_LIST_DIALOG_ELEM.querySelector(".ms-Button--primary");
+            this.NAME = ToDoList.NEW_LIST_DIALOG_ELEM.querySelector(".ms-TextField-field");
+            this.ERROR_MESSAGE = ToDoList.NEW_LIST_DIALOG_ELEM.querySelector(".ms-MessageBar");
+         },
+         startComponents: function() {
+            new fabric["Button"](this.SUBMIT_BUTTON, ToDoList.addNewList.bind(ToDoList));
          }
+      }
+      components.push(NewListDialog);
 
-         // Button Handler
-         // TODO FIX HANDLER
-         new fabric['Button'](this.SUBMIT_BUTTON, function() {
-            alert('test');
+      let TaskForm = {
+         init: function() {
+            this.cacheDom();
+            this.startComponents();
+         },
+         cacheDom: function() {
+            this.SUBMIT_BUTTON = ToDoList.TASK_FORM.querySelector(".ms-Button");
+            this.TASK_FORM_VALUE = ToDoList.TASK_FORM.querySelector(".ms-TextField-field");
+            this.TASK_FORM_LABEL = ToDoList.TASK_FORM.querySelector(".ms-Label");
+            this.CURRENT_LIST_TITLE = ToDoList.TASK_FORM.querySelector("#currentList");
+         },
+         startComponents: function() {
+            let TextFieldElements = ToDoList.TASK_FORM.querySelectorAll(".ms-TextField");
+            for (let i = 0; i < TextFieldElements.length; i++) {
+               new fabric['TextField'](TextFieldElements[i]);
+            }
+            new fabric['Button'](this.SUBMIT_BUTTON, this.addTaskToList.bind(this));
+         },
+         setName: function() {
+            console.log(ToDoList.data[ToDoList.currentList]);
+            this.CURRENT_LIST_TITLE.textContent = ToDoList.data[ToDoList.currentList].name;
+         },
+         addTaskToList: function() {
+            if (ToDoList.currentList !== null) {
+               let curr = ToDoList.currentList;
+               let newTask = {
+                  name: this.TASK_FORM_VALUE.value,
+                  completed: false
+               };
+               this.TASK_FORM_VALUE.value = "";
+               this.TASK_FORM_LABEL.style.display = "block";
+               let newTasks = ToDoList.data[curr].tasks;
+               newTasks.push(newTask)
+               ToDoList.data[curr].tasks = newTasks;
+               let newData = JSON.stringify(ToDoList.data);
+               localStorage.setItem("TODODATA", newData);
+               ToDoList.getData();
+            } else {
+               console.error("ERROR: LIST VALUE NOT SET");
+            }
+         }
+      }
+      components.push(TaskForm);
+
+      let TaskList = {
+         todo: [],
+         done: [],
+         tasks: [],
+         init: function() {
+            this.cacheDom();
+            this.clearList();
+            this.startComponents();
+         },
+         cacheDom: function() {
+            this.TASK_TEMPLATE = document.getElementById("taskTemplate");
+            this.PIVOT_CONTAINER = ToDoList.TASK_LIST.querySelector(".ms-Pivot");
+            this.ALL_TAB = this.PIVOT_CONTAINER.querySelector(".all");
+            this.TODO_TAB = this.PIVOT_CONTAINER.querySelector(".todo");
+            this.DONE_TAB = this.PIVOT_CONTAINER.querySelector(".done");
+         },
+         clearList: function() {
+            let tabs = [this.ALL_TAB, this.TODO_TAB, this.DONE_TAB];
+            tabs.forEach(function(tab) {
+               while (tab.hasChildNodes()) {
+                  tab.removeChild(tab.lastChild);
+               }
+            });
+         },
+         listTasks: function() {
+            if (ToDoList.currentList !== null) {
+               this.tasks = ToDoList.data[ToDoList.currentList].tasks;
+               this.clearList();
+               for (let i = 0; i < this.tasks.length; i++) {
+                  let item = this.TASK_TEMPLATE.cloneNode(true);
+                  let taskName = item.querySelector(".ms-Label");
+                  this.addCheckboxClick(item, i);
+                  item.removeAttribute("id");
+                  item.classList.remove("templateHtml");
+                  taskName.textContent = this.tasks[i].name;
+                  this.ALL_TAB.appendChild(item);
+                  this.addTaskToTab(item, i);
+               }
+               this.startFabricCheckbox();
+            }
+         },
+         startFabricCheckbox: function() {
+            var CheckBoxElements = ToDoList.TASK_LIST.querySelectorAll(".ms-CheckBox");
+            for(var i = 0; i < CheckBoxElements.length; i++) {
+              new fabric['CheckBox'](CheckBoxElements[i]);
+            }
+         },
+         startComponents: function() {
+            var PivotElements = ToDoList.TASK_LIST.querySelectorAll(".ms-Pivot");
+            for(var i = 0; i < PivotElements.length; i++) {
+               new fabric['Pivot'](PivotElements[i]);
+            }
+         },
+         addCheckboxClick: function(item, idx) {
+            let checkBox = item.querySelector(".ms-CheckBox-input");
+            checkBox.setAttribute("data-task-id", idx);
+            checkBox.checked = this.tasks[idx].completed;
+            checkBox.addEventListener("click", this.setTaskStatus);
+         },
+         addTaskToTab: function(item, idx) {
+            var itemClone = item.cloneNode(true);
+            this.addCheckboxClick(itemClone, idx);
+            if (this.tasks[idx].completed) {
+               this.DONE_TAB.appendChild(itemClone);
+            } else {
+               this.TODO_TAB.appendChild(itemClone);
+            }
+         },
+         setTaskStatus: function() {
+            let taskId = this.getAttribute("data-task-id");
+            let taskList = ToDoList.data[ToDoList.currentList].tasks;
+            taskList[taskId].completed = this.checked;
+            ToDoList.data[ToDoList.currentList].tasks = taskList;
+            let newData = JSON.stringify(ToDoList.data);
+            localStorage.setItem("TODODATA", newData);
+            setTimeout(function(){
+               ToDoList.getData(); 
+            }, 300); 
+         }
+      }
+      components.push(TaskList);
+
+      function startApp() {
+         components.forEach(function(ele) {
+            ele.init();
          });
       }
-   }
-   components.push(TaskForm);
+      startApp();
 
-   function startApp() {
-      components.forEach(function(ele) {
-         ele.init();
-      });
-   }
-   startApp();
+      window.ToDoList = ToDoList;
+   })();
 </script>
 </html>

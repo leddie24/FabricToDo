@@ -1,7 +1,66 @@
 @import "meyer-reset";
 
 #container {
-   max-width: 480px;
+   max-width: 640px;
    width: 100%;
    margin: 10px auto;
+}
+
+#header,
+#currentList {
+	margin-bottom: 20px;
+}
+
+#taskForm {
+	display: none;
+	padding: 30px 0;
+
+	&.visible {
+		display: block;
+	}
+
+	.formContainer {
+		display: flex;
+	}
+
+	.ms-TextField {
+		flex-grow: 1;
+	}
+}
+
+#newListDialog {
+	width: 300px;
+
+	.ms-MessageBar {
+		width: 100%;
+	}
+}
+
+.templateHtml {
+	display: none;
+}
+
+.hidden {
+	display: none !important;
+}
+
+.ms-Pivot-link {
+	&:focus,
+	&:active {
+		outline: 0;
+	}
+}
+
+#taskList {
+	margin: 20px 0;
+
+	.ms-Pivot-links {
+		width: 100%;
+		margin-bottom: 20px;
+	}
+
+	.ms-Pivot-link {
+		width: 33.3333%;
+		margin-right: 0;
+	}
 }
