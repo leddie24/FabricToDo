@@ -176,6 +176,9 @@
             listData = JSON.parse(listData);
             this.data = listData;
             this.showList();
+            if (this.currentList !== null) {
+               this.addIsSelected(this.currentList);
+            }
             TaskList.listTasks();
          },
          // Create Todo List Items
