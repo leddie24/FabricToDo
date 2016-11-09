@@ -35,13 +35,16 @@
                      </li>
                   </ul>
                </div>
-               <div id="deleteList" class="ms-CommandButton is-disabled">
+               <div id="deleteList" class="ms-CommandButton">
                   <button class="ms-CommandButton-button">
                      <span class="ms-CommandButton-icon ms-fontColor-themePrimary">
                         <i class="ms-Icon ms-Icon--Delete"></i>
                      </span>
-                     <span class="ms-CommandButton-label">Delete Current List</span>  
+                     <span class="ms-CommandButton-label">Delete List</span>  
+                     <span class="ms-CommandButton-dropdownIcon"><i class="ms-Icon ms-Icon--ChevronDown"></i></span>
                   </button>
+                  <ul id="deleteListsMenu" class="ms-ContextualMenu is-hidden">
+                  </ul>
               </div>
           </div>
       </div>
@@ -143,8 +146,8 @@
             this.NEW_LIST_DIALOG_ELEM = document.getElementById("newListDialog");
             this.NEW_LIST_BUTTON_ELEM = document.getElementById("newListButton");
             this.SHOW_LISTS_BUTTON_ELEM = document.getElementById("viewListsButton");
-            this.SHOW_LIST_CONTEXT_MENU = document.getElementById("listsMenu")
             this.TODO_LIST_CONTAINER = document.getElementById("listsMenu");
+            this.DELETE_TODO_LIST_CONTAINER = document.getElementById("deleteListsMenu");
             this.TASK_FORM = document.getElementById("taskForm");
             this.TASK_LIST = document.getElementById("taskList");
             this.LIST_ITEM_TEMPLATE = document.getElementById("listItemTemplate");
@@ -152,7 +155,8 @@
             this.DELETE_LIST_BUTTON = this.DELETE_LIST.querySelector(".ms-CommandButton-button");
          },
          startComponents: function() {
-            var contextualMenu = new fabric['ContextualMenu'](this.SHOW_LIST_CONTEXT_MENU, this.SHOW_LISTS_BUTTON_ELEM);
+            let listsMenu = new fabric['ContextualMenu'](this.TODO_LIST_CONTAINER, this.SHOW_LISTS_BUTTON_ELEM);
+            let deleteListsMenu = new fabric['ContextualMenu'](this.DELETE_TODO_LIST_CONTAINER, this.DELETE_LIST_BUTTON);
             new fabric["Button"](this.NEW_LIST_BUTTON_ELEM, this.openNewListDialog.bind(this));
             this.NEW_LIST_DIALOG = new fabric["Dialog"](this.NEW_LIST_DIALOG_ELEM);
          },
@@ -169,18 +173,29 @@
          },
          // Create Todo List Items
          showList: function() {
+            console.log("SHOW LIST");
             // Clear list
             while (this.TODO_LIST_CONTAINER.hasChildNodes()) {
                this.TODO_LIST_CONTAINER.removeChild(this.TODO_LIST_CONTAINER.lastChild);
             }
+            while (this.DELETE_TODO_LIST_CONTAINER.hasChildNodes()) {
+               this.DELETE_TODO_LIST_CONTAINER.removeChild(this.DELETE_TODO_LIST_CONTAINER.lastChild);
+            }
             this.data.forEach(function(ele, idx) {
                let listItem = this.LIST_ITEM_TEMPLATE.cloneNode(true);
                let listName = listItem.querySelector(".ms-ContextualMenu-link");
+               let listItemLink = listItem.querySelector(".ms-ContextualMenu-link");
+               if (idx === this.currentList) {
+                  listItemLink.classList.add("is-selected");
+               }
                listItem.classList.remove("templateHtml");
                listItem.removeAttribute("id");
                listName.textContent = ele.name;
+               let listItemDelete = listItem.cloneNode(true);
                listItem.addEventListener("click", this.setCurrentList.bind(this, idx));
+               listItemDelete.addEventListener("click", this.deleteList.bind(this, idx));
                this.TODO_LIST_CONTAINER.appendChild(listItem);
+               this.DELETE_TODO_LIST_CONTAINER.appendChild(listItemDelete);
             }.bind(this));
          },
          // Add New To Do List
@@ -195,9 +210,10 @@
                   tasks: []
                };
                NewListDialog.NAME.value = "";
-               ToDoList.data.push(newList);
+               this.data.push(newList);
                let newData = JSON.stringify(ToDoList.data);
                localStorage.setItem("TODODATA", newData);
+               this.setCurrentList(this.data.length - 1);
                this.getData();
             }
          },
@@ -205,13 +221,21 @@
             this.currentList = idx;
             if (this.currentList !== null) {
                this.TASK_FORM.classList.add("visible");
-               this.DELETE_LIST.classList.remove("is-disabled");
+               TaskList.listTasks();
+               TaskForm.setName();
             } else {
                this.TASK_FORM.classList.remove("visible");
-               this.DELETE_LIST.classList.add("is-disabled");
             }
-            TaskList.listTasks();
-            TaskForm.setName();
+         },
+         deleteList: function(idx) {
+            if (this.currentList === idx) {
+               this.setCurrentList(null);
+            }
+            this.data.splice(idx, 1);
+            let newListData = this.data;
+            newListData = JSON.stringify(newListData);
+            localStorage.setItem("TODODATA", newListData);
+            this.getData();
          },
          // Open new todo list dialog
          openNewListDialog: function() {
@@ -255,7 +279,6 @@
             new fabric['Button'](this.SUBMIT_BUTTON, this.addTaskToList.bind(this));
          },
          setName: function() {
-            console.log(ToDoList.data[ToDoList.currentList]);
             this.CURRENT_LIST_TITLE.textContent = ToDoList.data[ToDoList.currentList].name;
          },
          addTaskToList: function() {
