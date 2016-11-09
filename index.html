@@ -290,13 +290,13 @@
             this.addIsSelected(this.currentList);
          },
          openNewListDialog: function() {
-            NewListDialog.NAME.addEventListener("keypress", NewListDialog.addKeyListener, false);
+            NewListDialog.NAME.addEventListener("keypress", EventListeners.dialogEvent, false);
             this.NEW_LIST_DIALOG.open();
             NewListDialog.NAME.focus();
          },
          closeNewListDialog: function() {
             this.NEW_LIST_DIALOG.close();
-            NewListDialog.NAME.removeEventListener("keypress", NewListDialog.addKeyListener, false);
+            NewListDialog.NAME.removeEventListener("keypress", EventListeners.dialogEvent, false);
          }
       }
       components.push(ToDoList);
@@ -315,14 +315,25 @@
             new fabric["Button"](this.SUBMIT_BUTTON, ToDoList.addNewList.bind(ToDoList));
          },
          addKeyListener: function(e) {
+         }
+      }
+      components.push(NewListDialog);
+
+      let EventListeners = {
+         dialogEvent: function(e) {
             let keyCode = e.which;
             if (keyCode == 13) {
                ToDoList.addNewList();
                ToDoList.closeNewListDialog();
             }
+         },
+         taskFormEvent: function(e) {
+            let keyCode = e.which;
+            if (keyCode == 13) {
+               TaskForm.addTaskToList();
+            }
          }
       }
-      components.push(NewListDialog);
 
       let TaskForm = {
          hasListener: false,
@@ -346,35 +357,27 @@
             new fabric['Button'](this.SUBMIT_BUTTON, this.addTaskToList.bind(this));
          },
          setProgress: function() {
-            console.log(TaskList, TaskList.done);
-            console.log(TaskList.tasks);
-            console.log('PERCENT', TaskList.done.length / TaskList.tasks.length);
-            this.PROGRESS_COMP.setProgressPercent(TaskList.done.length / TaskList.tasks.length);
+            let total = (TaskList.tasks.length === 0 ? 1 : TaskList.tasks.length);
+            this.PROGRESS_COMP.setProgressPercent(TaskList.done.length / total);
          },
          setNameAndListeners: function() {
+            var _this = this;
             this.CURRENT_LIST_TITLE.textContent = ToDoList.data[ToDoList.currentList].name;
             console.log(this.hasListener, 'add');
             if (!this.hasListener) {
                console.log('added', this.hasListener);
-               this.TASK_FORM_VALUE.addEventListener("keypress", this.addKeyListener.bind(this), false);
+               // console.log(this.addKeyListener.bind(this));
+               this.TASK_FORM_VALUE.addEventListener("keypress", EventListeners.taskFormEvent, false);
                this.hasListener = true;
             }
             this.PROGRESS_COMP = new fabric['ProgressIndicator'](this.PROGRESS_INDICATOR);
             this.setProgress();
          },
          removeListeners: function() {
-            console.log(this.hasListener, 'remove');
             if (this.hasListener) {
                console.log('REMOVED', this.hasListener, this.TASK_FORM_VALUE);
-               this.TASK_FORM_VALUE.removeEventListener("keypress", this.addKeyListener.bind(this), false);
+               this.TASK_FORM_VALUE.removeEventListener("keypress", EventListeners.taskFormEvent, false);
                this.hasListener = false;
-            }
-         },
-         addKeyListener: function(e) {
-            let keyCode = e.which;
-            if (keyCode == 13) {
-               console.log('ADD TASK TO LIST');
-               this.addTaskToList();
             }
          },
          addTaskToList: function() {
