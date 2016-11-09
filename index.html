@@ -144,6 +144,7 @@
       let ToDoList = {
          data: [],
          currentList: null,
+         menuStatus: false,
          init: function() {
             this.cacheDom();
             this.startComponents();
@@ -171,15 +172,37 @@
             let listData = localStorage.getItem('TODODATA');
             if (!listData) {
                localStorage.setItem("TODODATA", "[]");
-               listData = localStorage.getItem("TODODATA");
+               listData = [];
+            } else {
+               listData = JSON.parse(listData);
             }
-            listData = JSON.parse(listData);
             this.data = listData;
+            if (this.data.length === 0) {
+               this.disableMenu();
+            } else {
+               if (!this.menuStatus) {
+                  this.enableMenu();
+               }
+            }
             this.showList();
             if (this.currentList !== null) {
                this.addIsSelected(this.currentList);
             }
             TaskList.listTasks();
+         },
+         disableMenu: function() {
+            this.SHOW_LISTS_BUTTON.parentNode.classList.add("is-disabled");
+            this.SHOW_LISTS_BUTTON.setAttribute("disabled", true);
+            this.DELETE_LIST.classList.add("is-disabled");
+            this.DELETE_LIST_BUTTON.setAttribute("disabled", true);
+            this.menuStatus = false;
+         },
+         enableMenu: function() {
+            this.SHOW_LISTS_BUTTON.parentNode.classList.remove("is-disabled");
+            this.SHOW_LISTS_BUTTON.removeAttribute("disabled");
+            this.DELETE_LIST.classList.remove("is-disabled");
+            this.DELETE_LIST_BUTTON.removeAttribute("disabled");
+            this.menuStatus = true;
          },
          // Create Todo List Items
          showList: function() {
@@ -206,9 +229,9 @@
          },
          // Add New To Do List
          addNewList: function() {
-            this.closeNewListDialog();
             if (NewListDialog.NAME.value.length < 4) {
                NewListDialog.ERROR_MESSAGE.classList.remove("hidden");
+               this.closeNewListDialog();
                this.openNewListDialog();
             } else {
                NewListDialog.ERROR_MESSAGE.classList.add("hidden");
@@ -225,26 +248,30 @@
             }
          },
          setCurrentList: function(idx) {
-            this.TASK_FORM.classList.remove("visible");
             this.currentList = idx;
             this.addIsSelected(this.currentList);
             if (this.currentList !== null) {
+               this.TASK_FORM.classList.remove("visible");
                setTimeout(function() {
                   this.TASK_FORM.classList.add("visible");
                   TaskForm.setNameAndListeners();
+                  TaskList.listTasks();
                }.bind(this), 100);
-               TaskList.listTasks();
             } else {
-               this.TASK_FORM.classList.remove("visible");
                TaskForm.removeListeners();
+               this.TASK_FORM.classList.remove("visible");
             }
          },
          addIsSelected: function(idx) {
-            let activeLinks = this.DELETE_TODO_LIST_CONTAINER.querySelectorAll(".ms-ContextualMenu-link.is-selected");
-            for (let i = 0; i < activeLinks.length; i++) {
-               activeLinks[i].classList.remove("is-selected");
-            }
             if (idx !== null) {
+               let activeLinks = this.DELETE_TODO_LIST_CONTAINER.querySelectorAll(".ms-ContextualMenu-link.is-selected");
+               for (let i = 0; i < activeLinks.length; i++) {
+                  activeLinks[i].classList.remove("is-selected");
+               }
+               activeLinks = this.TODO_LIST_CONTAINER.querySelectorAll(".ms-ContextualMenu-link.is-selected");
+               for (let i = 0; i < activeLinks.length; i++) {
+                  activeLinks[i].classList.remove("is-selected");
+               }
                this.DELETE_TODO_LIST_CONTAINER.childNodes[idx].querySelector(".ms-ContextualMenu-link").classList.add("is-selected");
                this.TODO_LIST_CONTAINER.childNodes[idx].querySelector(".ms-ContextualMenu-link").classList.add("is-selected");
             }
@@ -291,6 +318,7 @@
             let keyCode = e.which;
             if (keyCode == 13) {
                ToDoList.addNewList();
+               ToDoList.closeNewListDialog();
             }
          }
       }
@@ -317,20 +345,27 @@
             }
             new fabric['Button'](this.SUBMIT_BUTTON, this.addTaskToList.bind(this));
          },
+         setProgress: function() {
+            console.log(TaskList, TaskList.done);
+            console.log(TaskList.tasks);
+            console.log('PERCENT', TaskList.done.length / TaskList.tasks.length);
+            this.PROGRESS_COMP.setProgressPercent(TaskList.done.length / TaskList.tasks.length);
+         },
          setNameAndListeners: function() {
             this.CURRENT_LIST_TITLE.textContent = ToDoList.data[ToDoList.currentList].name;
+            console.log(this.hasListener, 'add');
             if (!this.hasListener) {
+               console.log('added', this.hasListener);
                this.TASK_FORM_VALUE.addEventListener("keypress", this.addKeyListener.bind(this), false);
                this.hasListener = true;
             }
             this.PROGRESS_COMP = new fabric['ProgressIndicator'](this.PROGRESS_INDICATOR);
             this.setProgress();
          },
-         setProgress: function() {
-            this.PROGRESS_COMP.setProgressPercent(TaskList.done.length / TaskList.tasks.length);
-         },
          removeListeners: function() {
+            console.log(this.hasListener, 'remove');
             if (this.hasListener) {
+               console.log('REMOVED', this.hasListener, this.TASK_FORM_VALUE);
                this.TASK_FORM_VALUE.removeEventListener("keypress", this.addKeyListener.bind(this), false);
                this.hasListener = false;
             }
@@ -338,6 +373,7 @@
          addKeyListener: function(e) {
             let keyCode = e.which;
             if (keyCode == 13) {
+               console.log('ADD TASK TO LIST');
                this.addTaskToList();
             }
          },
@@ -384,6 +420,12 @@
                new fabric['Pivot'](PivotElements[i]);
             }
          },
+         startFabricCheckbox: function() {
+            var CheckBoxElements = ToDoList.TASK_LIST.querySelectorAll(".ms-CheckBox");
+            for(var i = 0; i < CheckBoxElements.length; i++) {
+              new fabric['CheckBox'](CheckBoxElements[i]);
+            }
+         },
          clearList: function() {
             let tabs = [this.ALL_TAB, this.TODO_TAB, this.DONE_TAB];
             tabs.forEach(function(tab) {
@@ -408,13 +450,8 @@
                   this.ALL_TAB.appendChild(item);
                   this.addTaskToTab(item, i);
                }
+               TaskForm.setProgress();
                this.startFabricCheckbox();
-            }
-         },
-         startFabricCheckbox: function() {
-            var CheckBoxElements = ToDoList.TASK_LIST.querySelectorAll(".ms-CheckBox");
-            for(var i = 0; i < CheckBoxElements.length; i++) {
-              new fabric['CheckBox'](CheckBoxElements[i]);
             }
          },
          addCheckboxClick: function(item, idx) {
@@ -442,9 +479,9 @@
             let newData = JSON.stringify(ToDoList.data);
             localStorage.setItem("TODODATA", newData);
             setTimeout(function(){
-               ToDoList.getData(); 
+               ToDoList.getData();
                TaskForm.setProgress();
-            }, 300);
+            }, 200);
          }
       }
       components.push(TaskList);
