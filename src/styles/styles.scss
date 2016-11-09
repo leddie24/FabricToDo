@@ -29,6 +29,10 @@
 	display: none;
 	padding: 30px 0;
 
+	.ms-ProgressIndicator-itemProgress {
+		width: 100%;
+	}
+
 	&.visible {
 		display: block;
 	}

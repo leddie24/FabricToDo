@@ -52,7 +52,14 @@
          <!-- Current Task Name -->
          <h2 id="currentList" class="ms-font-xl"></h2>
 
-
+         <div class="ms-ProgressIndicator">
+            <div class="ms-ProgressIndicator-itemName"></div>
+            <div class="ms-ProgressIndicator-itemProgress">
+               <div class="ms-ProgressIndicator-progressTrack"></div>
+               <div class="ms-ProgressIndicator-progressBar"></div>
+            </div>
+            <div class="ms-ProgressIndicator-itemDescription"></div>
+         </div>
          <div id="taskList">
             <div class="ms-Pivot ms-Pivot--large ms-Pivot--tabs">
                <ul class="ms-Pivot-links">
@@ -221,9 +228,9 @@
             if (this.currentList !== null) {
                setTimeout(function() {
                   this.TASK_FORM.classList.add("visible");
+                  TaskForm.setNameAndListeners();
                }.bind(this), 100);
                TaskList.listTasks();
-               TaskForm.setNameAndListeners();
             } else {
                this.TASK_FORM.classList.remove("visible");
                TaskForm.removeListeners();
@@ -258,7 +265,6 @@
             NewListDialog.NAME.focus();
          },
          closeNewListDialog: function() {
-            console.log('close dialog');
             this.NEW_LIST_DIALOG.close();
             NewListDialog.NAME.removeEventListener("keypress", NewListDialog.addKeyListener, false);
          }
@@ -298,6 +304,8 @@
             this.TASK_FORM_VALUE = ToDoList.TASK_FORM.querySelector(".ms-TextField-field");
             this.TASK_FORM_LABEL = ToDoList.TASK_FORM.querySelector(".ms-Label");
             this.CURRENT_LIST_TITLE = ToDoList.TASK_FORM.querySelector("#currentList");
+            this.PROGRESS_INDICATOR = ToDoList.TASK_FORM.querySelector(".ms-ProgressIndicator");
+            this.PROGRESS_COMP = null;
          },
          startComponents: function() {
             let TextFieldElements = ToDoList.TASK_FORM.querySelectorAll(".ms-TextField");
@@ -312,6 +320,11 @@
                this.TASK_FORM_VALUE.addEventListener("keypress", this.addKeyListener.bind(this), false);
                this.hasListener = true;
             }
+            this.PROGRESS_COMP = new fabric['ProgressIndicator'](this.PROGRESS_INDICATOR);
+            this.setProgress();
+         },
+         setProgress: function() {
+            this.PROGRESS_COMP.setProgressPercent(TaskList.done.length / TaskList.tasks.length);
          },
          removeListeners: function() {
             if (this.hasListener) {
@@ -333,13 +346,13 @@
                   completed: false
                };
                this.TASK_FORM_VALUE.value = "";
-               // this.TASK_FORM_LABEL.style.display = "block";
                let newTasks = ToDoList.data[curr].tasks;
                newTasks.push(newTask)
                ToDoList.data[curr].tasks = newTasks;
                let newData = JSON.stringify(ToDoList.data);
                localStorage.setItem("TODODATA", newData);
                ToDoList.getData();
+               this.setProgress();
             } else {
                console.error("ERROR: LIST VALUE NOT SET");
             }
@@ -375,6 +388,8 @@
                   tab.removeChild(tab.lastChild);
                }
             });
+            this.done = [];
+            this.todo = [];
          },
          listTasks: function() {
             if (ToDoList.currentList !== null) {
@@ -410,8 +425,10 @@
             this.addCheckboxClick(itemClone, idx);
             if (this.tasks[idx].completed) {
                this.DONE_TAB.appendChild(itemClone);
+               this.done.push(itemClone);
             } else {
                this.TODO_TAB.appendChild(itemClone);
+               this.todo.push(itemClone);
             }
          },
          setTaskStatus: function() {
@@ -423,7 +440,8 @@
             localStorage.setItem("TODODATA", newData);
             setTimeout(function(){
                ToDoList.getData(); 
-            }, 300); 
+               TaskForm.setProgress();
+            }, 300);
          }
       }
       components.push(TaskList);
