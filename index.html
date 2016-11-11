@@ -245,6 +245,7 @@
                localStorage.setItem("TODODATA", newData);
                this.getData();
                this.setCurrentList(this.data.length - 1);
+               this.closeNewListDialog();
             }
          },
          setCurrentList: function(idx) {
@@ -324,7 +325,6 @@
             let keyCode = e.which;
             if (keyCode == 13) {
                ToDoList.addNewList();
-               ToDoList.closeNewListDialog();
             }
          },
          taskFormEvent: function(e) {
